@@ -40,7 +40,53 @@ library(clust431)
 What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
 
 ```{r cars}
-summary(cars)
+iris2 = iris[1:4,]
+em_clust = function(k, data){
+  ranmeans = rep(0, ncol(data))
+  for (i in 1:(k-1)){
+    ranmeans = rbind(ranmeans, ranmeans)
+  }
+  for (j in 1:k){
+    for(i in 1:ncol(data)){
+      maxval = max(data[,i])
+      minval = min(data[,i])
+      rand = runif(n=1, min=minval, max=maxval)
+      ranmeans[j,i] = rand
+    }
+  }
+  icluster = rep(0, nrow(data))
+  list = rep(0, k)
+  for (z in 1:nrow(data)){
+    for (y in 1:k){
+      list[y] = dmvnorm(data[z,], mean = ranmeans[y,], sigma = cov(data))
+    }
+    icluster[z] = which.max(list)
+    list = rep(0, k)
+  }
+  print(icluster)
+  means = rep(0,k)
+  
+  data = cbind(data, icluster)
+  means = t(1:(ncol(data)-1))
+  for (i in 1:(k-1)){
+    means = rbind(means, means)
+  }
+  for (i in 1:k){
+    means[i,] = colMeans(data[data[,ncol(data)] == i,])[-ncol(data)]
+  }
+  print(means)
+  cluster = rep(0, nrow(data))
+  list = rep(0, k)
+  for (z in 1:nrow(data)){
+    for (y in 1:k){
+      list[y] = dmvnorm(data[z,-ncol(data)], mean = means[y,], sigma = cov(data[data[,ncol(data)] == y,-ncol(data)]))
+    }
+    cluster[z] = which.max(list)
+    list = rep(0, k)
+  }
+  return(cluster)
+}
+em_clust(k=2, data=iris2)
 ```
 
 You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date.
